@@ -136,6 +136,7 @@ app.get('/api/dashboard', async (req, res) => {
       ranges: [
         "'Dash Board'!D11:D12", 
         "'Dash Board'!E11:E12",
+        "'Dash Board'!E12", // Date range for Regular
         "'Reg Details'!E27:E113" // Actual sparkline data
       ]
     });
@@ -145,6 +146,7 @@ app.get('/api/dashboard', async (req, res) => {
       ranges: [
         "'Dash Board'!D14:D15", 
         "'Dash Board'!E14:E15",
+        "'Dash Board'!E15", // Date range for Late
         "'Reg Details'!E113:E166" // Actual sparkline data
       ]
     });
@@ -176,16 +178,16 @@ app.get('/api/dashboard', async (req, res) => {
       percentage: regularResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',
       number: regularResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
       label: regularResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
-      dateRange: regularResponse.data.valueRanges[1]?.values?.[1]?.[0] || '',
-      sparklineData: regularResponse.data.valueRanges[2]?.values?.map(row => Number(row[0]) || 0) || []
+      dateRange: regularResponse.data.valueRanges[2]?.values?.[0]?.[0] || 'Sept 12th - Dec 6th',
+      sparklineData: regularResponse.data.valueRanges[3]?.values?.map(row => Number(row[0]) || 0) || []
     };
 
     const late = {
       percentage: lateResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',
       number: lateResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
       label: lateResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
-      dateRange: lateResponse.data.valueRanges[1]?.values?.[1]?.[0] || '',
-      sparklineData: lateResponse.data.valueRanges[2]?.values?.map(row => Number(row[0]) || 0) || []
+      dateRange: lateResponse.data.valueRanges[2]?.values?.[0]?.[0] || 'Dec 7th - Jan 6th',
+      sparklineData: lateResponse.data.valueRanges[3]?.values?.map(row => Number(row[0]) || 0) || []
     };
 
     // Extract delegation data

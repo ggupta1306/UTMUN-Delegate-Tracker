@@ -2,10 +2,16 @@ import React, { useState } from 'react'
 import Dashboard from './components/Dashboard'
 import DelegateSearch from './components/DelegateSearch'
 import Charts from './components/Charts'
+import AppSplash from './components/AppSplash'
 import './App.css'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard')
+  const [showSplash, setShowSplash] = useState(true)
+
+  if (showSplash) {
+    return <AppSplash onComplete={() => setShowSplash(false)} />
+  }
 
   return (
     <div className="app">

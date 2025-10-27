@@ -82,7 +82,7 @@ function Charts() {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={signupData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="date" stroke="#888" />
+              <XAxis dataKey="date" stroke="#888" angle={-45} textAnchor="end" height={80} />
               <YAxis stroke="#888" />
               <Tooltip contentStyle={{ backgroundColor: '#0f1419', border: '1px solid #333', color: 'white' }} />
               <Legend wrapperStyle={{ color: 'white' }} />
@@ -118,7 +118,7 @@ function Charts() {
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="name" stroke="#888" />
+                    <XAxis dataKey="name" stroke="#888" angle={-90} textAnchor="end" height={120} />
                     <YAxis stroke="#888" />
                     <Tooltip contentStyle={{ backgroundColor: '#0f1419', border: '1px solid #333' }} />
                     <Legend wrapperStyle={{ color: 'white' }} />

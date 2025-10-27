@@ -69,24 +69,46 @@ function Dashboard() {
     const percentages = data.map(val => ((Number(val) / total) * 100).toFixed(1))
     
     return (
-      <div style={{ 
-        display: 'flex', 
-        width: '100%', 
-        height: '40px', 
-        borderRadius: '4px',
-        overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.2)'
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem'
       }}>
         <div style={{ 
-          width: `${percentages[0]}%`, 
-          backgroundColor: '#FF6B35',
-          height: '100%'
-        }} />
-        <div style={{ 
-          width: `${percentages[1]}%`, 
-          backgroundColor: '#4a90e2',
-          height: '100%'
-        }} />
+          display: 'flex', 
+          width: '100%', 
+          height: '40px', 
+          borderRadius: '4px',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}>
+          <div style={{ 
+            width: `${percentages[0]}%`, 
+            backgroundColor: '#FF6B35', // Orange
+            height: '100%'
+          }} />
+          <div style={{ 
+            width: `${percentages[1]}%`, 
+            backgroundColor: '#4a90e2', // Blue
+            height: '100%'
+          }} />
+        </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '2rem',
+          fontSize: '0.85rem',
+          color: 'rgba(255, 255, 255, 0.7)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#FF6B35', borderRadius: '2px' }} />
+            <span>Small Delegations</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#4a90e2', borderRadius: '2px' }} />
+            <span>Large Delegations</span>
+          </div>
+        </div>
       </div>
     )
   }

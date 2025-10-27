@@ -7,7 +7,7 @@ function AppSplash({ onComplete }) {
   useEffect(() => {
     // Trigger animations
     setTimeout(() => setShowLogo(true), 100)
-    setTimeout(() => onComplete(), 2000)
+    setTimeout(() => onComplete(), 3300) // 1.3 seconds longer
   }, [onComplete])
 
   return (

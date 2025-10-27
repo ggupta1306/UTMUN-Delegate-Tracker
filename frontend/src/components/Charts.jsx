@@ -9,6 +9,7 @@ function Charts() {
   const [responsibility, setResponsibility] = useState([])
   const [trends, setTrends] = useState([])
   const [sevenDayData, setSevenDayData] = useState([])
+  const [yearComparison, setYearComparison] = useState([])
 
   useEffect(() => {
     fetchData()
@@ -20,17 +21,19 @@ function Charts() {
   const fetchData = async () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || ''
-      const [committeeRes, respRes, trendsRes, sevenDayRes] = await Promise.all([
+      const [committeeRes, respRes, trendsRes, sevenDayRes, yearCompRes] = await Promise.all([
         axios.get(`${API_URL}/api/committees`),
         axios.get(`${API_URL}/api/responsibility`),
         axios.get(`${API_URL}/api/registration-trends`),
-        axios.get(`${API_URL}/api/7day-signup`)
+        axios.get(`${API_URL}/api/7day-signup`),
+        axios.get(`${API_URL}/api/year-comparison`).catch(() => ({ data: { data: [] } }))
       ])
 
       setCommittees(committeeRes.data.data || [])
       setResponsibility(respRes.data.data || [])
       setTrends(trendsRes.data.data || [])
       setSevenDayData(sevenDayRes.data.data || [])
+      setYearComparison(yearCompRes.data.data || [])
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -60,13 +63,12 @@ function Charts() {
   const chartData = committees
     .filter(c => c.name && c.total)
     .map(c => ({
-      name: c.name.substring(0, 8),
+      name: c.name, // Show full committee name
       Beginner: Number(c.beginner) || 0,
       Intermediate: Number(c.intermediate) || 0,
       Advanced: Number(c.advanced) || 0,
       Total: Number(c.total) || 0
     }))
-    .slice(0, 15) // Top 15 committees
 
   return (
     <div className="charts-container">
@@ -93,6 +95,28 @@ function Charts() {
         </div>
       )}
 
+      {/* Year-over-Year Comparison Chart */}
+      <div className="chart-card">
+        <h3>Total Registration - This Year vs Last Year</h3>
+        {yearComparison.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={yearComparison}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="date" stroke="#888" angle={-45} textAnchor="end" height={80} />
+              <YAxis stroke="#888" />
+              <Tooltip contentStyle={{ backgroundColor: '#0f1419', border: '1px solid #333', color: 'white' }} />
+              <Legend wrapperStyle={{ color: 'white' }} />
+              <Line type="monotone" dataKey="currentYear" stroke="#4a90e2" strokeWidth={3} dot={false} name="2025-2026" />
+              <Line type="monotone" dataKey="previousYear" stroke="#f8bbd0" strokeWidth={3} dot={false} strokeOpacity={0.7} name="2024-2025" />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
+            No data available. Check the data source range in backend/server.js (api/year-comparison endpoint)
+          </div>
+        )}
+      </div>
+
       {/* Total vs Daily Count Chart */}
       {totalVsDaily.length > 0 && (
         <div className="chart-card">
@@ -115,18 +139,18 @@ function Charts() {
               {/* Stacked Bar Chart */}
               <div className="chart-card">
                 <h3>First Choice Breakdown by Committee</h3>
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="name" stroke="#888" angle={-90} textAnchor="end" height={120} />
-                    <YAxis stroke="#888" />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f1419', border: '1px solid #333' }} />
-                    <Legend wrapperStyle={{ color: 'white' }} />
-                    <Bar dataKey="Beginner" stackId="a" fill="#4ade80" />
-                    <Bar dataKey="Intermediate" stackId="a" fill="#fbbf24" />
-                    <Bar dataKey="Advanced" stackId="a" fill="#f87171" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <ResponsiveContainer width="100%" height={900}>
+                <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 30, top: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis type="number" stroke="#888" />
+                  <YAxis type="category" dataKey="name" stroke="#888" width={180} tick={{ fontSize: 10 }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f1419', border: '1px solid #333', color: 'white' }} />
+                  <Legend wrapperStyle={{ color: 'white' }} />
+                  <Bar dataKey="Beginner" stackId="a" fill="#4ade80" maxBarSize={15} />
+                  <Bar dataKey="Intermediate" stackId="a" fill="#fbbf24" maxBarSize={15} />
+                  <Bar dataKey="Advanced" stackId="a" fill="#f87171" maxBarSize={15} />
+                </BarChart>
+              </ResponsiveContainer>
               </div>
 
       {/* Committee Table */}

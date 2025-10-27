@@ -323,6 +323,13 @@
   font-size: 0.8rem;
   color: white;
   background: rgba(26, 33, 62, 0.4);
+}
+
+.phase-high {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.25rem;
+  font-style: italic;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding: 0.5rem 1.25rem;

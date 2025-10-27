@@ -127,6 +127,7 @@ app.get('/api/dashboard', async (req, res) => {
       ranges: [
         "'Dash Board'!D8:D9", 
         "'Dash Board'!E8:E9",
+        "'Dash Board'!K8:K9", // High number and date
         "'Reg Details'!E3:E27" // Actual sparkline data
       ]
     });
@@ -136,7 +137,8 @@ app.get('/api/dashboard', async (req, res) => {
       ranges: [
         "'Dash Board'!D11:D12", 
         "'Dash Board'!E11:E12",
-        "'Dash Board'!E12", // Date range for Regular
+        "'Dash Board'!E12:F12", // Date range for Regular
+        "'Dash Board'!K11:K12", // High number and date
         "'Reg Details'!E27:E113" // Actual sparkline data
       ]
     });
@@ -146,7 +148,7 @@ app.get('/api/dashboard', async (req, res) => {
       ranges: [
         "'Dash Board'!D14:D15", 
         "'Dash Board'!E14:E15",
-        "'Dash Board'!E15", // Date range for Late
+        "'Dash Board'!E15:F15", // Date range for Late
         "'Reg Details'!E113:E166" // Actual sparkline data
       ]
     });
@@ -171,22 +173,26 @@ app.get('/api/dashboard', async (req, res) => {
       number: earlyResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
       label: earlyResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
       dateRange: earlyResponse.data.valueRanges[1]?.values?.[1]?.[0] || '',
-      sparklineData: earlyResponse.data.valueRanges[2]?.values?.map(row => Number(row[0]) || 0) || []
+      highNumber: earlyResponse.data.valueRanges[2]?.values?.[0]?.[0] || '0',
+      highDate: earlyResponse.data.valueRanges[2]?.values?.[1]?.[0] || '',
+      sparklineData: earlyResponse.data.valueRanges[3]?.values?.map(row => Number(row[0]) || 0) || []
     };
 
     const regular = {
       percentage: regularResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',
       number: regularResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
       label: regularResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
-      dateRange: regularResponse.data.valueRanges[2]?.values?.[0]?.[0] || 'Sept 12th - Dec 6th',
-      sparklineData: regularResponse.data.valueRanges[3]?.values?.map(row => Number(row[0]) || 0) || []
+      dateRange: regularResponse.data.valueRanges[2]?.values?.[0]?.join(' ') || '', // Join E12 and F12
+      highNumber: regularResponse.data.valueRanges[3]?.values?.[0]?.[0] || '0',
+      highDate: regularResponse.data.valueRanges[3]?.values?.[1]?.[0] || '',
+      sparklineData: regularResponse.data.valueRanges[4]?.values?.map(row => Number(row[0]) || 0) || []
     };
 
     const late = {
       percentage: lateResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',
       number: lateResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
       label: lateResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
-      dateRange: lateResponse.data.valueRanges[2]?.values?.[0]?.[0] || 'Dec 7th - Jan 6th',
+      dateRange: lateResponse.data.valueRanges[2]?.values?.[0]?.join(' ') || '', // Join E15 and F15
       sparklineData: lateResponse.data.valueRanges[3]?.values?.map(row => Number(row[0]) || 0) || []
     };
 
@@ -305,6 +311,44 @@ app.get('/api/registration-trends', async (req, res) => {
   } catch (error) {
     console.error('Error fetching registration trends:', error);
     res.status(500).json({ error: 'Failed to fetch registration trends' });
+  }
+});
+
+// Endpoint to get year-over-year registration comparison
+app.get('/api/year-comparison', async (req, res) => {
+  try {
+    // Fetch year comparison data from Reg Details
+    const [datesResponse, currentYearResponse, previousYearResponse] = await Promise.all([
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'Reg Details'!D3:D550", // Dates
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'Reg Details'!E3:E550", // 2025-2026
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'Reg Details'!H3:H166", // 2024-2025
+      })
+    ]);
+
+    const dates = datesResponse.data.values || [];
+    const currentYear = currentYearResponse.data.values || [];
+    const previousYear = previousYearResponse.data.values || [];
+
+    // Combine the data, handling different lengths
+    const data = dates.map((row, index) => ({
+      date: row[0] || '',
+      currentYear: Number(currentYear[index]?.[0]) || 0,
+      previousYear: Number(previousYear[index]?.[0]) || 0
+    }));
+
+    res.json({ success: true, data: data });
+
+  } catch (error) {
+    console.error('Error fetching year comparison data:', error);
+    res.status(500).json({ error: 'Failed to fetch year comparison data' });
   }
 });
 

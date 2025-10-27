@@ -102,11 +102,11 @@ function Dashboard() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: '#FF6B35', borderRadius: '2px' }} />
-            <span>Small Delegations</span>
+            <span>Large Delegations</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: '#4a90e2', borderRadius: '2px' }} />
-            <span>Large Delegations</span>
+            <span>Small Delegations</span>
           </div>
         </div>
       </div>

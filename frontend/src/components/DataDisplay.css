@@ -1,0 +1,22 @@
+.data-display-container {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.data-display-container h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.charts-placeholder {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+  color: #666;
+  border: 2px dashed #ddd;
+}
+

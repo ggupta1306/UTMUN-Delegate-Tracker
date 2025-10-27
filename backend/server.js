@@ -1,0 +1,303 @@
+const express = require('express');
+const cors = require('cors');
+const { google } = require('googleapis');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+// Google Sheets API setup
+const auth = new google.auth.GoogleAuth({
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+
+const sheets = google.sheets({ version: 'v4', auth });
+
+// Store the spreadsheet ID (you'll get this from the Google Sheet URL)
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
+
+// Endpoint to submit delegate number and get results
+app.post('/api/delegate', async (req, res) => {
+  try {
+    const { delegateNumber, inputCell, outputRange } = req.body;
+
+    if (!delegateNumber || !inputCell || !outputRange) {
+      return res.status(400).json({ 
+        error: 'Missing required parameters: delegateNumber, inputCell, outputRange' 
+      });
+    }
+
+    // Step 1: Write delegate number to input cell
+    console.log(`Writing ${delegateNumber} to cell ${inputCell}`);
+    
+    // Convert to number to ensure it's treated as numeric, not text
+    const delegateValue = parseInt(delegateNumber) || delegateNumber;
+    
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: inputCell,
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [[delegateValue]],
+      },
+    });
+
+    // Step 2: Wait a bit for VLOOKUPs to calculate
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Step 3: Read the output range
+    console.log(`Reading data from ${outputRange}`);
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: outputRange,
+    });
+
+    const values = response.data.values || [];
+    
+    // Parse the delegate information into a structured format
+    const delegateInfo = {
+      // Left column (O35:O42)
+      name: values[0]?.[0] || 'N/A',
+      delegation: values[1]?.[0] || 'N/A',
+      experienceLevel: values[2]?.[0] || 'N/A',
+      financialAid: values[3]?.[0] || 'N/A',
+      accessibility: values[4]?.[0] || 'N/A',
+      regPeriod: values[5]?.[0] || 'N/A',
+      role: values[6]?.[0] || 'N/A',
+      committee: values[7]?.[0] || 'N/A',
+      // Right column (Q35:Q40)
+      pronouns: values[0]?.[2] || 'N/A',
+      grade: values[1]?.[2] || 'N/A',
+      emergencyName: values[2]?.[2] || 'N/A',
+      emergencyNumber: values[3]?.[2] || 'N/A',
+      emergencyEmail: values[4]?.[2] || 'N/A',
+      delegateEmail: values[5]?.[2] || 'N/A'
+    };
+    
+    res.json({ 
+      success: true,
+      data: delegateInfo,
+      delegateNumber: delegateNumber
+    });
+
+  } catch (error) {
+    console.error('Error fetching delegate data:', error);
+    res.status(500).json({ error: 'Failed to fetch delegate data from Google Sheets' });
+  }
+});
+
+// Endpoint to get dashboard data
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    // Fetch all the stats
+      const statsResponse = await sheets.spreadsheets.values.batchGet({
+        spreadsheetId: SPREADSHEET_ID,
+        ranges: [
+          "'Dash Board'!I5", // Fixed: Total Registration
+          "'Dash Board'!I6",
+          "'Dash Board'!M5",
+          "'Dash Board'!M6",
+          "'Dash Board'!N1",
+        ]
+      });
+
+    const earlyResponse = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId: SPREADSHEET_ID,
+      ranges: [
+        "'Dash Board'!D8:D9", 
+        "'Dash Board'!E8:E9",
+        "'Reg Details'!E3:E27" // Actual sparkline data
+      ]
+    });
+
+    const regularResponse = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId: SPREADSHEET_ID,
+      ranges: [
+        "'Dash Board'!D11:D12", 
+        "'Dash Board'!E11:E12",
+        "'Reg Details'!E27:E113" // Actual sparkline data
+      ]
+    });
+
+    const lateResponse = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId: SPREADSHEET_ID,
+      ranges: [
+        "'Dash Board'!D14:D15", 
+        "'Dash Board'!E14:E15",
+        "'Reg Details'!E113:E166" // Actual sparkline data
+      ]
+    });
+
+    // Get the Large to Small Delegation sparkline
+    const delegationResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'School'!AB4:AB5"
+    });
+
+    // Extract values
+    const stats = {
+      totalRegistrations: statsResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0',
+      todaysRegistration: statsResponse.data.valueRanges[1]?.values?.[0]?.[0] || '0',
+      delegatesToImport: statsResponse.data.valueRanges[2]?.values?.[0]?.[0] || '0',
+      delegatesToSlot: statsResponse.data.valueRanges[3]?.values?.[0]?.[0] || '0',
+      remainingCapacity: statsResponse.data.valueRanges[4]?.values?.[0]?.[0] || '0',
+    };
+
+    const early = {
+      percentage: earlyResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',
+      number: earlyResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
+      label: earlyResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
+      dateRange: earlyResponse.data.valueRanges[1]?.values?.[1]?.[0] || '',
+      sparklineData: earlyResponse.data.valueRanges[2]?.values?.map(row => Number(row[0]) || 0) || []
+    };
+
+    const regular = {
+      percentage: regularResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',
+      number: regularResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
+      label: regularResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
+      dateRange: regularResponse.data.valueRanges[1]?.values?.[1]?.[0] || '',
+      sparklineData: regularResponse.data.valueRanges[2]?.values?.map(row => Number(row[0]) || 0) || []
+    };
+
+    const late = {
+      percentage: lateResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',
+      number: lateResponse.data.valueRanges[0]?.values?.[1]?.[0] || '0',
+      label: lateResponse.data.valueRanges[1]?.values?.[0]?.[0] || '',
+      dateRange: lateResponse.data.valueRanges[1]?.values?.[1]?.[0] || '',
+      sparklineData: lateResponse.data.valueRanges[2]?.values?.map(row => Number(row[0]) || 0) || []
+    };
+
+    // Extract delegation data
+    const delegationData = delegationResponse.data.values?.map(row => Number(row[0]) || 0) || [];
+
+    res.json({
+      success: true,
+      stats,
+      registrations: { early, regular, late },
+      delegationSparkline: delegationData
+    });
+
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard data' });
+  }
+});
+
+// Endpoint to get committee assignments
+app.get('/api/committees', async (req, res) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Dash Board'!A33:F63", // Committee data (include column F for total)
+    });
+
+    const values = response.data.values || [];
+    const committees = values
+      .filter(row => row[1] && row[1] !== 'COM') // Skip header and empty rows
+      .map(row => ({
+        name: row[1] || '',
+        beginner: parseInt(row[2]) || 0,
+        intermediate: parseInt(row[3]) || 0,
+        advanced: parseInt(row[4]) || 0,
+        total: parseInt(row[5]) || 0
+      }));
+
+    res.json({ success: true, data: committees });
+
+  } catch (error) {
+    console.error('Error fetching committee data:', error);
+    res.status(500).json({ error: 'Failed to fetch committee data' });
+  }
+});
+
+// Endpoint to get responsibility summary
+app.get('/api/responsibility', async (req, res) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Dash Board'!N51:Q54", // Responsibility summary (fixed range)
+    });
+
+    const values = response.data.values || [];
+    const summary = values
+      .filter(row => row[0] && row[0] !== 'Responsibility') // Skip header
+      .map(row => ({
+        person: row[0] || '',
+        earlyDelegates: parseInt(row[1]) || 0,
+        aDelegates: parseInt(row[2]) || 0,
+        delegations: parseInt(row[3]) || 0
+      }));
+
+    res.json({ success: true, data: summary });
+
+  } catch (error) {
+    console.error('Error fetching responsibility data:', error);
+    res.status(500).json({ error: 'Failed to fetch responsibility data' });
+  }
+});
+
+// Endpoint to get 7-day running signup data
+app.get('/api/7day-signup', async (req, res) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Reg Details'!K25:M33", // Date, Current Week, Previous Week
+    });
+
+    const values = response.data.values || [];
+    const data = values.map(row => ({
+      date: row[0] || '',
+      currentWeek: Number(row[1]) || 0,
+      previousWeek: Number(row[2]) || 0
+    }));
+
+    res.json({ success: true, data: data });
+
+  } catch (error) {
+    console.error('Error fetching 7-day signup data:', error);
+    res.status(500).json({ error: 'Failed to fetch 7-day signup data' });
+  }
+});
+
+// Endpoint to get registration trends for charts
+app.get('/api/registration-trends', async (req, res) => {
+  try {
+    // Get last 100 registration entries
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Reg Details'!E2:G100", // Date, #/Day, SUM
+    });
+
+    const values = response.data.values || [];
+    const trends = values
+      .filter(row => row[0] && !isNaN(row[1]))
+      .map(row => ({
+        date: row[0],
+        dailyCount: Number(row[1]) || 0,
+        total: Number(row[2]) || 0
+      }));
+
+    res.json({ success: true, data: trends });
+
+  } catch (error) {
+    console.error('Error fetching registration trends:', error);
+    res.status(500).json({ error: 'Failed to fetch registration trends' });
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+

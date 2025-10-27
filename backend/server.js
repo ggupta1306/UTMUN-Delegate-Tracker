@@ -10,10 +10,24 @@ app.use(cors());
 app.use(express.json());
 
 // Google Sheets API setup
+// Clean up the private key to handle different formats
+let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+if (privateKey) {
+  // Remove surrounding quotes if present
+  privateKey = privateKey.replace(/^["']|["']$/g, '');
+  // Replace escaped newlines with actual newlines
+  privateKey = privateKey.replace(/\\n/g, '\n');
+  // If no newlines found, add them (key was pasted as single line)
+  if (!privateKey.includes('\n')) {
+    privateKey = privateKey.replace(/-----BEGIN PRIVATE KEY-----/, '-----BEGIN PRIVATE KEY-----\n');
+    privateKey = privateKey.replace(/-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
+  }
+}
+
 const auth = new google.auth.GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n').replace(/"/g, ''),
+    private_key: privateKey,
   },
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });

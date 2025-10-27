@@ -19,11 +19,12 @@ function Charts() {
 
   const fetchData = async () => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL || ''
       const [committeeRes, respRes, trendsRes, sevenDayRes] = await Promise.all([
-        axios.get('/api/committees'),
-        axios.get('/api/responsibility'),
-        axios.get('/api/registration-trends'),
-        axios.get('/api/7day-signup')
+        axios.get(`${API_URL}/api/committees`),
+        axios.get(`${API_URL}/api/responsibility`),
+        axios.get(`${API_URL}/api/registration-trends`),
+        axios.get(`${API_URL}/api/7day-signup`)
       ])
 
       setCommittees(committeeRes.data.data || [])

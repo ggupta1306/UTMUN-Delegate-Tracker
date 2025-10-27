@@ -20,7 +20,8 @@ function DelegateSearch() {
     setError(null)
 
     try {
-      const response = await axios.post('/api/delegate', {
+      const API_URL = import.meta.env.VITE_API_URL || ''
+      const response = await axios.post(`${API_URL}/api/delegate`, {
         delegateNumber,
         inputCell: "'Dash Board'!Q34", // Input cell for delegate code
         outputRange: "'Dash Board'!O35:Q42" // Output range with delegate info (including role and committee)

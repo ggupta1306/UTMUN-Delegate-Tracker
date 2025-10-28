@@ -304,7 +304,7 @@ app.get('/api/dashboard', async (req, res) => {
       // Get registration details for velocity calculation
       const regDetailsResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: "'Reg Details'!D3:F100", // D=Date, E=Daily count, F=Cumulative
+        range: "'Reg Details'!D2:F166", // D=Date, E=Daily count, F=Cumulative
       });
       
       const regData = regDetailsResponse.data.values || [];

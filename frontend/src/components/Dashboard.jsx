@@ -152,6 +152,29 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Progress Bar */}
+      <div className="progress-section">
+        <div className="progress-header">
+          <h3>Registration Progress</h3>
+          <span className="progress-text">{data.stats?.totalRegistrations || 0} / {data.stats?.goal || 1250}</span>
+        </div>
+        <div className="progress-bar-container">
+          <div className="progress-bar-fill" style={{ width: `${data.stats?.progressPercentage || 0}%` }} />
+        </div>
+        <div className="progress-percentage">{data.stats?.progressPercentage || 0}% Complete</div>
+        
+        {/* Milestone Badges */}
+        <div className="milestones">
+          {data.stats?.milestones?.map((milestone, i) => (
+            <div key={i} className={`milestone ${milestone.achieved ? 'achieved' : ''}`}>
+              <div className="milestone-icon">{milestone.achieved ? '✓' : '○'}</div>
+              <div className="milestone-name">{milestone.name}</div>
+              <div className="milestone-threshold">{milestone.threshold}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="stats-grid">
         <div className="stat-card">

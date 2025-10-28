@@ -119,6 +119,7 @@ app.get('/api/dashboard', async (req, res) => {
           "'Dash Board'!M5",
           "'Dash Board'!M6",
           "'Dash Board'!N1",
+          "'Dash Board'!K1", // Goal (1250)
         ]
       });
 
@@ -160,13 +161,32 @@ app.get('/api/dashboard', async (req, res) => {
     });
 
     // Extract values
+    const totalReg = Number(statsResponse.data.valueRanges[0]?.values?.[0]?.[0]) || 0;
+    const goal = Number(statsResponse.data.valueRanges[5]?.values?.[0]?.[0]) || 1250;
+    
     const stats = {
-      totalRegistrations: statsResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0',
+      totalRegistrations: totalReg,
+      goal: goal,
+      progressPercentage: goal > 0 ? ((totalReg / goal) * 100).toFixed(1) : 0,
       todaysRegistration: statsResponse.data.valueRanges[1]?.values?.[0]?.[0] || '0',
       delegatesToImport: statsResponse.data.valueRanges[2]?.values?.[0]?.[0] || '0',
       delegatesToSlot: statsResponse.data.valueRanges[3]?.values?.[0]?.[0] || '0',
       remainingCapacity: statsResponse.data.valueRanges[4]?.values?.[0]?.[0] || '0',
     };
+    
+    // Calculate milestones
+    const milestonePercentages = [20, 40, 50, 60, 80, 90, 100];
+    const milestones = milestonePercentages.map(percent => {
+      const threshold = Math.floor(goal * percent / 100);
+      const achieved = totalReg >= threshold;
+      return {
+        percent,
+        threshold,
+        achieved,
+        name: percent === 100 ? 'Full Capacity' : `${percent}% of Goal`
+      };
+    });
+    stats.milestones = milestones;
 
     const early = {
       percentage: earlyResponse.data.valueRanges[0]?.values?.[0]?.[0] || '0%',

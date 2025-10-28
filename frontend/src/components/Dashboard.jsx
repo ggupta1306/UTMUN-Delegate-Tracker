@@ -181,6 +181,26 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Quick Stats - Coming Soon */}
+      <div className="quick-stats-section">
+        <h3>Quick Stats (Data Coming Soon)</h3>
+        <div className="quick-stats-grid">
+          <div className="quick-stat-card">
+            <div className="quick-stat-label">Avg Delegation Size</div>
+            <div className="quick-stat-value">—</div>
+          </div>
+          
+          <div className="quick-stat-card">
+            <div className="quick-stat-label">Most Popular Committee</div>
+            <div className="quick-stat-value">—</div>
+          </div>
+          
+          <div className="quick-stat-card">
+            <div className="quick-stat-label">Experience Levels</div>
+            <div className="quick-stat-value">B: — • I: — • A: —</div>
+          </div>
+        </div>
+      </div>
 
       {/* Large to Small Delegations */}
       {data.delegationSparkline && data.delegationSparkline.length > 0 && (

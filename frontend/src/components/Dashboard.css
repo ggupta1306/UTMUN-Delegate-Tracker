@@ -467,11 +467,6 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.quick-stat-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
 .quick-stat-label {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.7);
@@ -481,8 +476,15 @@
 }
 
 .quick-stat-value {
-  font-size: 1.3rem;
+  font-size: 1.8rem;
   font-weight: 700;
+  color: #4a90e2;
+  word-break: break-word;
+}
+
+.quick-stat-value-small {
+  font-size: 1rem;
+  font-weight: 600;
   color: #4a90e2;
   word-break: break-word;
 }

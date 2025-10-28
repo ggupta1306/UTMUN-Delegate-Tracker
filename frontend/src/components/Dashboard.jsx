@@ -181,26 +181,6 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="quick-stats-section">
-        <h3>Quick Stats</h3>
-        <div className="quick-stats-grid">
-          <div className="quick-stat-card">
-            <div className="quick-stat-label">Avg Delegation Size</div>
-            <div className="quick-stat-value">{data.quickStats?.averageDelegationSize || 'N/A'}</div>
-          </div>
-          
-          <div className="quick-stat-card">
-            <div className="quick-stat-label">Most Popular Committee</div>
-            <div className="quick-stat-value">{data.quickStats?.mostPopularCommittee || 'N/A'}</div>
-          </div>
-          
-          <div className="quick-stat-card">
-            <div className="quick-stat-label">Experience Levels</div>
-            <div className="quick-stat-value">B: {data.quickStats?.experienceLevelBreakdown?.beginner || 0} • I: {data.quickStats?.experienceLevelBreakdown?.intermediate || 0} • A: {data.quickStats?.experienceLevelBreakdown?.advanced || 0}</div>
-          </div>
-        </div>
-      </div>
 
       {/* Large to Small Delegations */}
       {data.delegationSparkline && data.delegationSparkline.length > 0 && (

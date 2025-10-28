@@ -242,15 +242,18 @@ app.get('/api/dashboard', async (req, res) => {
           total: parseInt(row[5]) || 0
         }));
 
-      if (committees.length > 0) {
+      if (committees.length > 0 && committees.filter(c => c.total > 0).length > 0) {
         const mostPopular = committees.reduce((max, c) => c.total > max.total ? c : max);
         quickStats.mostPopularCommittee = mostPopular.name;
-        quickStats.averageDelegationSize = mostPopular.total > 0 ? (totalReg / committees.length).toFixed(1) : 0;
         
-        // Calculate experience breakdown
-        const beginn = committees.reduce((sum, c) => sum + (parseInt(committeeValues.find(row => row[1] === c.name)?.[2]) || 0), 0);
-        const inter = committees.reduce((sum, c) => sum + (parseInt(committeeValues.find(row => row[1] === c.name)?.[3]) || 0), 0);
-        const adv = committees.reduce((sum, c) => sum + (parseInt(committeeValues.find(row => row[1] === c.name)?.[4]) || 0), 0);
+        // Calculate average delegation size (total delegates / number of schools)
+        const totalDelegates = committees.reduce((sum, c) => sum + c.total, 0);
+        quickStats.averageDelegationSize = (totalDelegates / committees.length).toFixed(1);
+        
+        // Calculate experience breakdown from the committee data
+        const beginn = committeeValues.reduce((sum, row) => sum + (parseInt(row[2]) || 0), 0);
+        const inter = committeeValues.reduce((sum, row) => sum + (parseInt(row[3]) || 0), 0);
+        const adv = committeeValues.reduce((sum, row) => sum + (parseInt(row[4]) || 0), 0);
         
         quickStats.experienceLevelBreakdown = {
           beginner: beginn,

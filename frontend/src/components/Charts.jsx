@@ -140,10 +140,10 @@ function Charts() {
               <div className="chart-card">
                 <h3>First Choice Breakdown by Committee</h3>
               <ResponsiveContainer width="100%" height={900}>
-                <BarChart data={chartData} layout="vertical" margin={{ left: 120, right: 40, top: 20, bottom: 20 }}>
+                <BarChart data={chartData} layout="vertical" margin={{ left: 80, right: 40, top: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                   <XAxis type="number" stroke="#888" />
-                  <YAxis type="category" dataKey="name" stroke="#888" width={100} tick={{ fontSize: 10 }} />
+                  <YAxis type="category" dataKey="name" stroke="#888" width={60} tick={{ fontSize: 9 }} />
                   <Tooltip contentStyle={{ backgroundColor: '#0f1419', border: '1px solid #333', color: 'white' }} />
                   <Legend wrapperStyle={{ color: 'white' }} />
                   <Bar dataKey="Beginner" stackId="a" fill="#4ade80" maxBarSize={15} />

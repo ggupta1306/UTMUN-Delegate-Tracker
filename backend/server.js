@@ -299,16 +299,16 @@ app.get('/api/dashboard', async (req, res) => {
       // Get registration details for velocity calculation
       const regDetailsResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: "'Reg Details'!E3:G100", // Date, total, and daily count
+        range: "'Reg Details'!D3:F100", // D=Date, E=Daily count, F=Cumulative
       });
       
       const regData = regDetailsResponse.data.values || [];
       if (regData.length > 0) {
-        // Get last 7 days of daily counts
+        // Get last 7 days of daily counts (column E, index 1)
         const recentDaily = regData
-          .filter(row => row[2]) // Has daily count
+          .filter(row => row[1]) // Has daily count in column E
           .slice(-7)
-          .map(row => Number(row[2]) || 0);
+          .map(row => Number(row[1]) || 0);
         
         if (recentDaily.length > 0) {
           const avgPerDay = recentDaily.reduce((sum, val) => sum + val, 0) / recentDaily.length;

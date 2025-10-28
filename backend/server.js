@@ -312,13 +312,16 @@ app.get('/api/dashboard', async (req, res) => {
       console.log('Velocity card - first few rows:', regData.slice(0, 5));
       
       if (regData.length > 0) {
-        // Get last 7 days of daily counts (column E, index 1)
+        // Get last 7 days of daily counts
+        // Column D=Date (index 0), Column E=#/Day (index 1), Column F=SUM (index 2)
+        // Filter to rows that have a date, then get the #/Day column
         const recentDaily = regData
-          .filter(row => row[1]) // Has daily count in column E
+          .filter(row => row[0] && row[1]) // Has date AND daily count
           .slice(-7)
-          .map(row => Number(row[1]) || 0);
+          .map(row => Number(row[1]) || 0); // Get column E (#/Day)
         
-        console.log('Velocity card - recentDaily:', recentDaily);
+        console.log('Velocity card - filtered to rows with data:', recentDaily);
+        console.log('Velocity card - raw last 7 rows:', regData.slice(-7));
         
         if (recentDaily.length > 0) {
           const avgPerDay = recentDaily.reduce((sum, val) => sum + val, 0) / recentDaily.length;

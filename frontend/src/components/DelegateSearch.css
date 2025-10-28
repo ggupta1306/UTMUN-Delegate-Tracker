@@ -1,9 +1,28 @@
 .delegate-search {
-  padding: 1.5rem;
+  padding: 1rem;
   max-width: 600px;
   margin: 0 auto;
   background: transparent;
   min-height: 100vh;
+}
+
+@media (max-width: 480px) {
+  .delegate-search {
+    padding: 0.75rem;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .info-value {
+    text-align: left;
+  }
+  
+  .search-container {
+    padding: 1rem;
+  }
 }
 
 .search-header {
@@ -165,6 +184,8 @@
   justify-content: space-between;
   padding: 0.5rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .info-row:last-child {
@@ -174,10 +195,15 @@
 .info-label {
   color: #bbb;
   font-size: 0.9rem;
+  flex: 1;
+  min-width: 120px;
 }
 
 .info-value {
   color: white;
   font-weight: 600;
   text-align: right;
+  flex: 1;
+  min-width: 100px;
+  word-break: break-word;
 }

@@ -309,28 +309,32 @@ app.get('/api/dashboard', async (req, res) => {
       
       const regData = regDetailsResponse.data.values || [];
       console.log('Velocity card - regData length:', regData.length);
-      console.log('Velocity card - first few rows:', regData.slice(0, 5));
       
       if (regData.length > 0) {
-        // Get last 7 days of daily counts
-        // Column D=Date (index 0), Column E=#/Day (index 1), Column F=SUM (index 2)
-        // Filter to rows that have a date, then get the #/Day column
-        const recentDaily = regData
-          .filter(row => row[0] && row[1]) // Has date AND daily count
-          .slice(-7)
+        // Get all rows with data, excluding future dates
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+        
+        const rowsWithData = regData
+          .filter(row => {
+            if (!row[0] || !row[1]) return false;
+            const rowDate = new Date(row[0]);
+            rowDate.setHours(0, 0, 0, 0);
+            return rowDate <= today; // Only include past or today's data
+          })
+          .slice(-7) // Get last 7 rows of actual data
           .map(row => Number(row[1]) || 0); // Get column E (#/Day)
         
-        console.log('Velocity card - filtered to rows with data:', recentDaily);
-        console.log('Velocity card - raw last 7 rows:', regData.slice(-7));
+        console.log('Velocity card - rows with past data (last 7):', rowsWithData);
         
-        if (recentDaily.length > 0) {
-          const avgPerDay = recentDaily.reduce((sum, val) => sum + val, 0) / recentDaily.length;
+        if (rowsWithData.length > 0 && rowsWithData.some(v => v > 0)) {
+          const avgPerDay = rowsWithData.reduce((sum, val) => sum + val, 0) / rowsWithData.length;
           velocity.avgPerDay = avgPerDay.toFixed(1);
           
           // Calculate trend (comparing last 3 days to previous 3 days)
-          if (recentDaily.length >= 6) {
-            const recentAvg = recentDaily.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
-            const previousAvg = recentDaily.slice(-6, -3).reduce((sum, val) => sum + val, 0) / 3;
+          if (rowsWithData.length >= 6) {
+            const recentAvg = rowsWithData.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
+            const previousAvg = rowsWithData.slice(-6, -3).reduce((sum, val) => sum + val, 0) / 3;
             velocity.trend = recentAvg > previousAvg ? 'up' : recentAvg < previousAvg ? 'down' : 'neutral';
           }
           
@@ -338,10 +342,12 @@ app.get('/api/dashboard', async (req, res) => {
           if (avgPerDay > 0) {
             const remaining = goal - totalReg;
             const daysNeeded = Math.ceil(remaining / avgPerDay);
-            const today = new Date();
-            const projectedDate = new Date(today.setDate(today.getDate() + daysNeeded));
-            velocity.projectedDate = projectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + daysNeeded + 1);
+            velocity.projectedDate = tomorrow.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           }
+          
+          console.log('Velocity card - final velocity:', velocity);
         }
       }
     } catch (err) {

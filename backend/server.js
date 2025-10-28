@@ -308,12 +308,17 @@ app.get('/api/dashboard', async (req, res) => {
       });
       
       const regData = regDetailsResponse.data.values || [];
+      console.log('Velocity card - regData length:', regData.length);
+      console.log('Velocity card - first few rows:', regData.slice(0, 5));
+      
       if (regData.length > 0) {
         // Get last 7 days of daily counts (column E, index 1)
         const recentDaily = regData
           .filter(row => row[1]) // Has daily count in column E
           .slice(-7)
           .map(row => Number(row[1]) || 0);
+        
+        console.log('Velocity card - recentDaily:', recentDaily);
         
         if (recentDaily.length > 0) {
           const avgPerDay = recentDaily.reduce((sum, val) => sum + val, 0) / recentDaily.length;

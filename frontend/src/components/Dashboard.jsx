@@ -181,6 +181,28 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Registration Velocity */}
+      {data.velocity && data.velocity.avgPerDay > 0 && (
+        <div className="velocity-card">
+          <div className="velocity-header">
+            <h3>Registration Velocity</h3>
+            <div className={`velocity-trend ${data.velocity.trend}`}>
+              {data.velocity.trend === 'up' ? '↑' : data.velocity.trend === 'down' ? '↓' : '→'}
+            </div>
+          </div>
+          <div className="velocity-stats">
+            <div className="velocity-stat">
+              <div className="velocity-label">Average per Day</div>
+              <div className="velocity-value">{data.velocity.avgPerDay} signups/day</div>
+            </div>
+            <div className="velocity-stat">
+              <div className="velocity-label">Projected Completion</div>
+              <div className="velocity-value">{data.velocity.projectedDate}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Stats - Coming Soon */}
       <div className="quick-stats-section">
         <h3>Quick Stats (Data Coming Soon)</h3>

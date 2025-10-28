@@ -433,6 +433,77 @@
   pointer-events: none;
 }
 
+/* Velocity Card */
+.velocity-card {
+  background: rgba(15, 20, 25, 0.25);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  padding: 1.5rem;
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.velocity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.velocity-header h3 {
+  color: white;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.velocity-trend {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.velocity-trend.up {
+  color: #22c55e;
+}
+
+.velocity-trend.down {
+  color: #f87171;
+}
+
+.velocity-trend.neutral {
+  color: #fbbf24;
+}
+
+.velocity-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.velocity-stat {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.velocity-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.velocity-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #4a90e2;
+}
+
 /* Quick Stats Section */
 .quick-stats-section {
   background: rgba(15, 20, 25, 0.25);

@@ -226,6 +226,53 @@ app.get('/api/dashboard', async (req, res) => {
       financialAidPercentage: 'N/A',
       experienceLevelBreakdown: { beginner: 0, intermediate: 0, advanced: 0 }
     };
+    
+    // Calculate registration velocity
+    let velocity = {
+      avgPerDay: 0,
+      trend: 'neutral',
+      projectedDate: 'N/A'
+    };
+
+    try {
+      // Get registration details for velocity calculation
+      const regDetailsResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'Reg Details'!E3:G100", // Date, total, and daily count
+      });
+      
+      const regData = regDetailsResponse.data.values || [];
+      if (regData.length > 0) {
+        // Get last 7 days of daily counts
+        const recentDaily = regData
+          .filter(row => row[2]) // Has daily count
+          .slice(-7)
+          .map(row => Number(row[2]) || 0);
+        
+        if (recentDaily.length > 0) {
+          const avgPerDay = recentDaily.reduce((sum, val) => sum + val, 0) / recentDaily.length;
+          velocity.avgPerDay = avgPerDay.toFixed(1);
+          
+          // Calculate trend (comparing last 3 days to previous 3 days)
+          if (recentDaily.length >= 6) {
+            const recentAvg = recentDaily.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
+            const previousAvg = recentDaily.slice(-6, -3).reduce((sum, val) => sum + val, 0) / 3;
+            velocity.trend = recentAvg > previousAvg ? 'up' : recentAvg < previousAvg ? 'down' : 'neutral';
+          }
+          
+          // Project completion date
+          if (avgPerDay > 0) {
+            const remaining = goal - totalReg;
+            const daysNeeded = Math.ceil(remaining / avgPerDay);
+            const today = new Date();
+            const projectedDate = new Date(today.setDate(today.getDate() + daysNeeded));
+            velocity.projectedDate = projectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error calculating velocity:', err);
+    }
 
     try {
       // Get committee data to find most popular
@@ -275,7 +322,8 @@ app.get('/api/dashboard', async (req, res) => {
       stats,
       registrations: { early, regular, late },
       delegationSparkline: delegationData,
-      quickStats
+      quickStats,
+      velocity
     });
 
   } catch (error) {

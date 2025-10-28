@@ -219,11 +219,55 @@ app.get('/api/dashboard', async (req, res) => {
     // Extract delegation data
     const delegationData = delegationResponse.data.values?.map(row => Number(row[0]) || 0) || [];
 
+    // Fetch quick stats (committee assignments for most popular committee)
+    let quickStats = {
+      averageDelegationSize: 0,
+      mostPopularCommittee: 'N/A',
+      financialAidPercentage: 'N/A',
+      experienceLevelBreakdown: { beginner: 0, intermediate: 0, advanced: 0 }
+    };
+
+    try {
+      // Get committee data to find most popular
+      const committeeResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'Dash Board'!A33:F63",
+      });
+
+      const committeeValues = committeeResponse.data.values || [];
+      const committees = committeeValues
+        .filter(row => row[1] && row[1] !== 'COM')
+        .map(row => ({
+          name: row[1] || '',
+          total: parseInt(row[5]) || 0
+        }));
+
+      if (committees.length > 0) {
+        const mostPopular = committees.reduce((max, c) => c.total > max.total ? c : max);
+        quickStats.mostPopularCommittee = mostPopular.name;
+        quickStats.averageDelegationSize = mostPopular.total > 0 ? (totalReg / committees.length).toFixed(1) : 0;
+        
+        // Calculate experience breakdown
+        const beginn = committees.reduce((sum, c) => sum + (parseInt(committeeValues.find(row => row[1] === c.name)?.[2]) || 0), 0);
+        const inter = committees.reduce((sum, c) => sum + (parseInt(committeeValues.find(row => row[1] === c.name)?.[3]) || 0), 0);
+        const adv = committees.reduce((sum, c) => sum + (parseInt(committeeValues.find(row => row[1] === c.name)?.[4]) || 0), 0);
+        
+        quickStats.experienceLevelBreakdown = {
+          beginner: beginn,
+          intermediate: inter,
+          advanced: adv
+        };
+      }
+    } catch (err) {
+      console.error('Error fetching quick stats:', err);
+    }
+
     res.json({
       success: true,
       stats,
       registrations: { early, regular, late },
-      delegationSparkline: delegationData
+      delegationSparkline: delegationData,
+      quickStats
     });
 
   } catch (error) {

@@ -405,44 +405,50 @@
   height: auto;
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 4px 20px rgba(74, 144, 226, 0.3));
+  pointer-events: none;
 }
 
 .logo-progress-fill {
   position: absolute;
   width: 100%;
   max-width: 400px;
+  height: 100%;
   background: linear-gradient(180deg, 
     rgba(74, 144, 226, 0.3) 0%, 
     rgba(74, 144, 226, 0.5) 50%,
     rgba(74, 144, 226, 0.7) 100%);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  transition: height 0.8s ease;
+  transition: all 0.8s ease;
   box-shadow: 
-    0 -10px 30px rgba(74, 144, 226, 0.4),
     inset 0 2px 0 rgba(255, 255, 255, 0.3);
-  border-top: 2px solid rgba(255, 255, 255, 0.4);
   pointer-events: none;
   overflow: hidden;
+  mask-image: url('/logo.png');
+  mask-size: 100% auto;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url('/logo.png');
+  -webkit-mask-size: 100% auto;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
 }
 
 .logo-progress-fill::before {
   content: '';
   position: absolute;
-  top: -50%;
+  top: 0;
   left: 0;
   right: 0;
-  height: 200%;
+  height: 100%;
   background: linear-gradient(180deg, 
-    rgba(255, 255, 255, 0.3) 0%, 
-    transparent 50%,
-    rgba(255, 255, 255, 0.1) 100%);
+    rgba(255, 255, 255, 0.4) 0%, 
+    transparent 50%);
   animation: shimmer 3s ease-in-out infinite;
 }
 
 @keyframes shimmer {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
 }
 

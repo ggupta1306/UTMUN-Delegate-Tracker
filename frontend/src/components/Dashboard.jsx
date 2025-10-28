@@ -152,22 +152,14 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Logo Progress Bar */}
+      {/* Progress Bar */}
       <div className="progress-section">
         <div className="progress-header">
           <span>Progress: {data.stats?.totalRegistrations || 0} / {data.stats?.goal || 1250}</span>
           <span>{data.stats?.progressPercentage || 0}%</span>
         </div>
-        <div className="logo-progress-wrapper">
-          <div className="logo-progress-container">
-            <img src="/logo.png" alt="UTMUN Logo" className="logo-progress-image" />
-            <div 
-              className="logo-progress-fill" 
-              style={{ 
-                height: `${data.stats?.progressPercentage || 0}%` 
-              }} 
-            />
-          </div>
+        <div className="progress-bar-container">
+          <div className="progress-bar-fill" style={{ width: `${data.stats?.progressPercentage || 0}%` }} />
         </div>
       </div>
 

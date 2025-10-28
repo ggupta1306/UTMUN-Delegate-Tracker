@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import axios from 'axios'
+import DelegationSearch from './DelegationSearch'
 import './DelegateSearch.css'
 
 function DelegateSearch() {
   const [delegateNumber, setDelegateNumber] = useState('')
+  const [searchType, setSearchType] = useState('delegate') // 'delegate' or 'delegation'
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
@@ -36,6 +38,11 @@ function DelegateSearch() {
     }
   }
 
+  // If delegation search, render that component
+  if (searchType === 'delegation') {
+    return <DelegationSearch />
+  }
+
   return (
     <div className="delegate-search">
       <header className="search-header">
@@ -47,6 +54,22 @@ function DelegateSearch() {
           </div>
         </div>
       </header>
+
+      {/* Search Type Toggle */}
+      <div className="search-type-toggle">
+        <button 
+          className={`toggle-btn ${searchType === 'delegate' ? 'active' : ''}`}
+          onClick={() => setSearchType('delegate')}
+        >
+          Search Delegate
+        </button>
+        <button 
+          className={`toggle-btn ${searchType === 'delegation' ? 'active' : ''}`}
+          onClick={() => setSearchType('delegation')}
+        >
+          Search Delegation
+        </button>
+      </div>
 
       <div className="search-container">
         <form onSubmit={handleSubmit} className="search-form">

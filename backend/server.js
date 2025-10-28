@@ -107,6 +107,67 @@ app.post('/api/delegate', async (req, res) => {
   }
 });
 
+// Endpoint to search for delegation
+app.post('/api/delegation', async (req, res) => {
+  try {
+    const { delegationName } = req.body;
+
+    if (!delegationName) {
+      return res.status(400).json({ 
+        error: 'Missing required parameter: delegationName' 
+      });
+    }
+
+    // Step 1: Write delegation name to input cell Q44:V44
+    console.log(`Writing ${delegationName} to cell Q44:V44`);
+    
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Dash Board'!Q44:V44",
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [[delegationName]],
+      },
+    });
+
+    // Step 2: Wait a bit for VLOOKUPs to calculate
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Step 3: Read the output range O45:Q49
+    console.log(`Reading data from 'Dash Board'!O45:Q49`);
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Dash Board'!O45:Q49",
+    });
+
+    const values = response.data.values || [];
+    
+    // Parse the delegation information into a structured format
+    const delegationInfo = {
+      // Left column (O45:O49)
+      primaryContact: values[0]?.[0] || 'N/A',
+      role: values[1]?.[0] || 'N/A',
+      email: values[2]?.[0] || 'N/A',
+      delegationName: values[3]?.[0] || 'N/A',
+      address: values[4]?.[0] || 'N/A',
+      // Right column (Q45:Q47)
+      owner: values[0]?.[1] || 'N/A',
+      totalDels: values[1]?.[1] || 'N/A',
+      lS: values[2]?.[1] || 'N/A'
+    };
+    
+    res.json({ 
+      success: true,
+      data: delegationInfo,
+      delegationName: delegationName
+    });
+
+  } catch (error) {
+    console.error('Error fetching delegation data:', error);
+    res.status(500).json({ error: 'Failed to fetch delegation data from Google Sheets' });
+  }
+});
+
 // Endpoint to get dashboard data
 app.get('/api/dashboard', async (req, res) => {
   try {

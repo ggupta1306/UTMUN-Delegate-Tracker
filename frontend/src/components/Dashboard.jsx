@@ -187,21 +187,17 @@ function Dashboard() {
         <div className="quick-stats-grid">
           <div className="quick-stat-card">
             <div className="quick-stat-label">Avg Delegation Size</div>
-            <div className="quick-stat-value">{data.quickStats?.averageDelegationSize || '0'}</div>
+            <div className="quick-stat-value">{data.quickStats?.averageDelegationSize || 'N/A'}</div>
           </div>
           
           <div className="quick-stat-card">
             <div className="quick-stat-label">Most Popular Committee</div>
-            <div className="quick-stat-value-small">{data.quickStats?.mostPopularCommittee || 'N/A'}</div>
+            <div className="quick-stat-value">{data.quickStats?.mostPopularCommittee || 'N/A'}</div>
           </div>
           
           <div className="quick-stat-card">
             <div className="quick-stat-label">Experience Levels</div>
-            <div className="quick-stat-breakdown">
-              <span className="quick-stat-level">Beginner: {data.quickStats?.experienceLevelBreakdown?.beginner || 0}</span>
-              <span className="quick-stat-level">Intermediate: {data.quickStats?.experienceLevelBreakdown?.intermediate || 0}</span>
-              <span className="quick-stat-level">Advanced: {data.quickStats?.experienceLevelBreakdown?.advanced || 0}</span>
-            </div>
+            <div className="quick-stat-value">B: {data.quickStats?.experienceLevelBreakdown?.beginner || 0} • I: {data.quickStats?.experienceLevelBreakdown?.intermediate || 0} • A: {data.quickStats?.experienceLevelBreakdown?.advanced || 0}</div>
           </div>
         </div>
       </div>

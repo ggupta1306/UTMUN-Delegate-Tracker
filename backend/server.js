@@ -235,15 +235,20 @@ app.get('/api/dashboard', async (req, res) => {
       });
 
       const committeeValues = committeeResponse.data.values || [];
+      console.log('Committee values:', committeeValues.slice(0, 5)); // Debug first 5 rows
+      
       const committees = committeeValues
         .filter(row => row[1] && row[1] !== 'COM')
         .map(row => ({
           name: row[1] || '',
           total: parseInt(row[5]) || 0
         }));
+      
+      console.log('Filtered committees:', committees.length, committees.slice(0, 3)); // Debug
 
       if (committees.length > 0 && committees.filter(c => c.total > 0).length > 0) {
         const mostPopular = committees.reduce((max, c) => c.total > max.total ? c : max);
+        console.log('Most popular:', mostPopular); // Debug
         quickStats.mostPopularCommittee = mostPopular.name;
         
         // Calculate average delegation size (total delegates / number of schools)

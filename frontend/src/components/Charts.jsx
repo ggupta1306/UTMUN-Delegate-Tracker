@@ -13,8 +13,8 @@ function Charts() {
 
   useEffect(() => {
     fetchData()
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchData, 10000)
+    // Reduce polling to avoid Sheets API rate limits
+    const interval = setInterval(fetchData, 45000)
     return () => clearInterval(interval)
   }, [])
 

@@ -37,6 +37,22 @@ const sheets = google.sheets({ version: 'v4', auth });
 // Store the spreadsheet ID (you'll get this from the Google Sheet URL)
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
+// Simple in-memory cache to reduce Google Sheets read rate
+const memoryCache = new Map();
+function getFromCache(key) {
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+  const { expiresAt, value } = entry;
+  if (Date.now() > expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return value;
+}
+function setInCache(key, value, ttlMs = 60_000) {
+  memoryCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+}
+
 // Endpoint to submit delegate number and get results
 app.post('/api/delegate', async (req, res) => {
   try {
@@ -415,6 +431,10 @@ app.get('/api/dashboard', async (req, res) => {
 // Endpoint to get committee assignments
 app.get('/api/committees', async (req, res) => {
   try {
+    const cached = getFromCache('committees');
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
     // Read from COM POPULARITY sheet per user's ranges
     const [namesRes, begRes, intRes, advRes] = await Promise.all([
       sheets.spreadsheets.values.get({
@@ -459,6 +479,7 @@ app.get('/api/committees', async (req, res) => {
       };
     });
 
+    setInCache('committees', committees, 60_000);
     res.json({ success: true, data: committees });
 
   } catch (error) {
@@ -470,6 +491,8 @@ app.get('/api/committees', async (req, res) => {
 // Endpoint to get responsibility summary
 app.get('/api/responsibility', async (req, res) => {
   try {
+    const cached = getFromCache('responsibility');
+    if (cached) return res.json({ success: true, data: cached });
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: "'Dash Board'!N51:Q54", // Responsibility summary (fixed range)
@@ -485,6 +508,7 @@ app.get('/api/responsibility', async (req, res) => {
         delegations: parseInt(row[3]) || 0
       }));
 
+    setInCache('responsibility', summary, 60_000);
     res.json({ success: true, data: summary });
 
   } catch (error) {
@@ -496,6 +520,8 @@ app.get('/api/responsibility', async (req, res) => {
 // Endpoint to get 7-day running signup data
 app.get('/api/7day-signup', async (req, res) => {
   try {
+    const cached = getFromCache('sevenDay');
+    if (cached) return res.json({ success: true, data: cached });
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: "'Reg Details'!K25:M33", // Date, Current Week, Previous Week
@@ -508,6 +534,7 @@ app.get('/api/7day-signup', async (req, res) => {
       previousWeek: Number(row[2]) || 0
     }));
 
+    setInCache('sevenDay', data, 60_000);
     res.json({ success: true, data: data });
 
   } catch (error) {
@@ -519,6 +546,8 @@ app.get('/api/7day-signup', async (req, res) => {
 // Endpoint to get registration trends for charts
 app.get('/api/registration-trends', async (req, res) => {
   try {
+    const cached = getFromCache('trends');
+    if (cached) return res.json({ success: true, data: cached });
     // Get last 100 registration entries
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -534,6 +563,7 @@ app.get('/api/registration-trends', async (req, res) => {
         total: Number(row[2]) || 0
       }));
 
+    setInCache('trends', trends, 60_000);
     res.json({ success: true, data: trends });
 
   } catch (error) {
@@ -545,6 +575,8 @@ app.get('/api/registration-trends', async (req, res) => {
 // Endpoint to get year-over-year registration comparison
 app.get('/api/year-comparison', async (req, res) => {
   try {
+    const cached = getFromCache('yearComparison');
+    if (cached) return res.json({ success: true, data: cached });
     // Fetch year comparison data from Reg Details
     const [datesResponse, currentYearResponse, previousYearResponse] = await Promise.all([
       sheets.spreadsheets.values.get({
@@ -572,6 +604,7 @@ app.get('/api/year-comparison', async (req, res) => {
       previousYear: Number(previousYear[index]?.[0]) || 0
     }));
 
+    setInCache('yearComparison', data, 60_000);
     res.json({ success: true, data: data });
 
   } catch (error) {

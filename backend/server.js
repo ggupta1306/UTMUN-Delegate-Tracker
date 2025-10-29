@@ -415,21 +415,49 @@ app.get('/api/dashboard', async (req, res) => {
 // Endpoint to get committee assignments
 app.get('/api/committees', async (req, res) => {
   try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: "'Dash Board'!A33:F63", // Committee data (include column F for total)
-    });
+    // Read from COM POPULARITY sheet per user's ranges
+    const [namesRes, begRes, intRes, advRes] = await Promise.all([
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'COM POPULARITY'!A2:A31", // Committee names
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'COM POPULARITY'!D1:D31", // Beginner (D1 is label)
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'COM POPULARITY'!E1:E31", // Intermediate (E1 is label)
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'COM POPULARITY'!F1:F31", // Advanced (F1 is label)
+      })
+    ]);
 
-    const values = response.data.values || [];
-    const committees = values
-      .filter(row => row[1] && row[1] !== 'COM') // Skip header and empty rows
-      .map(row => ({
-        name: row[1] || '',
-        beginner: parseInt(row[2]) || 0,
-        intermediate: parseInt(row[3]) || 0,
-        advanced: parseInt(row[4]) || 0,
-        total: parseInt(row[5]) || 0
-      }));
+    const names = (namesRes.data.values || []).map(r => r[0]).filter(Boolean);
+    const beginnerCol = (begRes.data.values || []).map(r => r[0]);
+    const intermediateCol = (intRes.data.values || []).map(r => r[0]);
+    const advancedCol = (advRes.data.values || []).map(r => r[0]);
+
+    // D1/E1/F1 are labels, so shift if lengths exceed names
+    const maybeShift = (arr) => arr.length === names.length + 1 ? arr.slice(1) : arr;
+    const beginners = maybeShift(beginnerCol);
+    const intermediates = maybeShift(intermediateCol);
+    const advanceds = maybeShift(advancedCol);
+
+    const committees = names.map((name, idx) => {
+      const beginner = parseInt(beginners[idx]) || 0;
+      const intermediate = parseInt(intermediates[idx]) || 0;
+      const advanced = parseInt(advanceds[idx]) || 0;
+      return {
+        name,
+        beginner,
+        intermediate,
+        advanced,
+        total: beginner + intermediate + advanced,
+      };
+    });
 
     res.json({ success: true, data: committees });
 

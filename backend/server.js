@@ -439,19 +439,19 @@ app.get('/api/committees', async (req, res) => {
     const [namesRes, begRes, intRes, advRes] = await Promise.all([
       sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY '!A2:A31", // Committee names (note trailing space in sheet name)
+        range: "'COM POPULARITY'!A2:A31", // Committee names
       }),
       sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY '!D1:D31", // Beginner (D1 is label)
+        range: "'COM POPULARITY'!D1:D31", // Beginner (D1 is label)
       }),
       sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY '!E1:E31", // Intermediate (E1 is label)
+        range: "'COM POPULARITY'!E1:E31", // Intermediate (E1 is label)
       }),
       sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY '!F1:F31", // Advanced (F1 is label)
+        range: "'COM POPULARITY'!F1:F31", // Advanced (F1 is label)
       })
     ]);
 

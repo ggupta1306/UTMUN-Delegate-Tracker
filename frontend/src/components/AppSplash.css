@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  animation: fadeOut 0.5s ease-out 1.8s forwards;
+  animation: fadeOut 0.6s ease-out 3.0s forwards;
 }
 
 @keyframes fadeOut {
@@ -17,6 +17,14 @@
     opacity: 0;
     visibility: hidden;
   }
+}
+
+.splash-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.15;
 }
 
 .logo-container {
@@ -49,10 +57,41 @@
   }
 }
 
+.logo-wrap {
+  position: relative;
+  display: inline-block;
+}
+
 .splash-logo {
   height: 80px;
   width: auto;
   animation: logoGlow 2s ease-in-out infinite;
+}
+/* logo-sweep removed per design feedback */
+
+.liquid-bar {
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+}
+
+.liquid-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(74,144,226,0.2), rgba(74,144,226,0.6));
+  box-shadow: 0 0 12px rgba(74,144,226,0.35);
+  animation: fill 1.3s ease-out 0.6s forwards;
+}
+
+@keyframes fill {
+  to { width: 100%; }
 }
 
 @keyframes logoGlow {

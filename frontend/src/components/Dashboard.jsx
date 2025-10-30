@@ -29,6 +29,19 @@ function Dashboard() {
     }
   }
 
+  const formatNum = (value, digits = 2) => {
+    const n = parseFloat(value)
+    if (isNaN(n)) return value ?? '—'
+    return n.toFixed(digits)
+  }
+
+  const daysUntilConference = () => {
+    const today = new Date()
+    const conf = new Date('2026-01-29T00:00:00')
+    const diffMs = conf.setHours(0,0,0,0) - today.setHours(0,0,0,0)
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
+  }
+
   const MiniSparkline = ({ data }) => {
     if (!data || data.length === 0) return <div className="sparkline-empty">No data</div>
     
@@ -140,6 +153,17 @@ function Dashboard() {
         </button>
       </header>
 
+      {/* Countdown to Conference */}
+      <div className="countdown-card">
+        <div className="countdown-left">
+          <div className="countdown-label">Days until Conference</div>
+          <div className="countdown-date">Jan 29, 2026</div>
+        </div>
+        <div className="countdown-right">
+          <div className="countdown-value">{daysUntilConference()}</div>
+        </div>
+      </div>
+
       {/* Priority Stats */}
       <div className="priority-stats">
         <div className={`priority-card urgent ${data.stats?.delegatesToImport === '0' ? 'success' : ''}`}>
@@ -203,23 +227,31 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Quick Stats - Coming Soon */}
+      {/* Quick Stats */}
       <div className="quick-stats-section">
-        <h3>Quick Stats (Data Coming Soon)</h3>
+        <h3>Quick Stats</h3>
         <div className="quick-stats-grid">
           <div className="quick-stat-card">
             <div className="quick-stat-label">Avg Delegation Size</div>
-            <div className="quick-stat-value">—</div>
+            <div className="quick-stat-value">{formatNum(data.quickStats?.averageDelegationSize, 2)}</div>
           </div>
-          
           <div className="quick-stat-card">
             <div className="quick-stat-label">Most Popular Committee</div>
-            <div className="quick-stat-value">—</div>
+            <div className="quick-stat-value">{data.quickStats?.mostPopularCommittee ?? '—'}</div>
           </div>
-          
+          <div className="quick-stat-card">
+            <div className="quick-stat-label">Most Popular Branch</div>
+            <div className="quick-stat-value">{data.quickStats?.mostPopularBranch ?? '—'}</div>
+          </div>
+          <div className="quick-stat-card">
+            <div className="quick-stat-label"># of Delegations</div>
+            <div className="quick-stat-value">{data.quickStats?.numDelegations ?? '—'}</div>
+          </div>
           <div className="quick-stat-card">
             <div className="quick-stat-label">Experience Levels</div>
-            <div className="quick-stat-value">B: — • I: — • A: —</div>
+            <div className="quick-stat-value">
+              B: {data.quickStats?.experienceBreakdown?.beginner ?? '—'} • I: {data.quickStats?.experienceBreakdown?.intermediate ?? '—'} • A: {data.quickStats?.experienceBreakdown?.advanced ?? '—'}
+            </div>
           </div>
         </div>
       </div>

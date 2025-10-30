@@ -192,6 +192,11 @@ app.post('/api/delegation', async (req, res) => {
 // Endpoint to get dashboard data
 app.get('/api/dashboard', async (req, res) => {
   try {
+    const cached = getFromCache('dashboard');
+    if (cached) {
+      // Serve cached quickly while refreshing in background
+      res.json(cached);
+    }
     // Fetch all the stats
       const statsResponse = await sheets.spreadsheets.values.batchGet({
         spreadsheetId: SPREADSHEET_ID,
@@ -301,12 +306,13 @@ app.get('/api/dashboard', async (req, res) => {
     // Extract delegation data
     const delegationData = delegationResponse.data.values?.map(row => Number(row[0]) || 0) || [];
 
-    // Fetch quick stats (committee assignments for most popular committee)
+    // Fetch quick stats
     let quickStats = {
-      averageDelegationSize: 0,
-      mostPopularCommittee: 'N/A',
-      financialAidPercentage: 'N/A',
-      experienceLevelBreakdown: { beginner: 0, intermediate: 0, advanced: 0 }
+      averageDelegationSize: '—',
+      mostPopularCommittee: '—',
+      mostPopularBranch: '—',
+      numDelegations: '—',
+      experienceBreakdown: { beginner: 0, intermediate: 0, advanced: 0 }
     };
     
     // Calculate registration velocity
@@ -371,113 +377,82 @@ app.get('/api/dashboard', async (req, res) => {
     }
 
     try {
-      // Get committee data to find most popular
+      // Read quick stats from cells P58:P61
+      const quickCellsRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: "'Dash Board'!P58:P61",
+      });
+      const qVals = quickCellsRes.data.values || [];
+      quickStats.averageDelegationSize = qVals[0]?.[0] ?? '—';
+      quickStats.mostPopularCommittee = qVals[1]?.[0] ?? '—';
+      quickStats.mostPopularBranch = qVals[2]?.[0] ?? '—';
+      quickStats.numDelegations = qVals[3]?.[0] ?? '—';
+
+      // Get committee data to compute experience breakdown sums
       const committeeResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: "'Dash Board'!A33:F63",
+        range: "'COM POPULARITY'!D2:F31",
       });
 
-      const committeeValues = committeeResponse.data.values || [];
-      console.log('Committee values:', committeeValues.slice(0, 5)); // Debug first 5 rows
-      
-      const committees = committeeValues
-        .filter(row => row[1] && row[1] !== 'COM')
-        .map(row => ({
-          name: row[1] || '',
-          total: parseInt(row[5]) || 0
-        }));
-      
-      console.log('Filtered committees:', committees.length, committees.slice(0, 3)); // Debug
-
-      if (committees.length > 0 && committees.filter(c => c.total > 0).length > 0) {
-        const mostPopular = committees.reduce((max, c) => c.total > max.total ? c : max);
-        console.log('Most popular:', mostPopular); // Debug
-        quickStats.mostPopularCommittee = mostPopular.name;
-        
-        // Calculate average delegation size (total delegates / number of schools)
-        const totalDelegates = committees.reduce((sum, c) => sum + c.total, 0);
-        quickStats.averageDelegationSize = (totalDelegates / committees.length).toFixed(1);
-        
-        // Calculate experience breakdown from the committee data
-        const beginn = committeeValues.reduce((sum, row) => sum + (parseInt(row[2]) || 0), 0);
-        const inter = committeeValues.reduce((sum, row) => sum + (parseInt(row[3]) || 0), 0);
-        const adv = committeeValues.reduce((sum, row) => sum + (parseInt(row[4]) || 0), 0);
-        
-        quickStats.experienceLevelBreakdown = {
-          beginner: beginn,
-          intermediate: inter,
-          advanced: adv
-        };
-      }
+      const expValues = committeeResponse.data.values || [];
+      const sums = expValues.reduce((acc, row) => {
+        acc.beginner += parseInt(row[0]) || 0; // D
+        acc.intermediate += parseInt(row[1]) || 0; // E
+        acc.advanced += parseInt(row[2]) || 0; // F
+        return acc;
+      }, { beginner: 0, intermediate: 0, advanced: 0 });
+      quickStats.experienceBreakdown = sums;
     } catch (err) {
       console.error('Error fetching quick stats:', err);
     }
 
-    res.json({
+    const payload = {
       success: true,
       stats,
       registrations: { early, regular, late },
       delegationSparkline: delegationData,
       quickStats,
       velocity
-    });
+    };
+
+    setInCache('dashboard', payload, 60_000);
+    // If we already responded with cache earlier, avoid sending headers twice
+    if (!res.headersSent) {
+      res.json(payload);
+    }
 
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
+    const cached = getFromCache('dashboard');
+    if (cached) {
+      return res.json({ ...cached, fromCache: true });
+    }
     res.status(500).json({ error: 'Failed to fetch dashboard data' });
   }
 });
 
 // Endpoint to get committee assignments
+// Committee assignments (keep original source for table)
 app.get('/api/committees', async (req, res) => {
   try {
     const cached = getFromCache('committees');
-    if (cached) {
-      return res.json({ success: true, data: cached });
-    }
-    // Read from COM POPULARITY sheet per user's ranges
-    const [namesRes, begRes, intRes, advRes] = await Promise.all([
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY'!A2:A31", // Committee names
-      }),
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY'!D1:D31", // Beginner (D1 is label)
-      }),
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY'!E1:E31", // Intermediate (E1 is label)
-      }),
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: "'COM POPULARITY'!F1:F31", // Advanced (F1 is label)
-      })
-    ]);
+    if (cached) return res.json({ success: true, data: cached });
 
-    const names = (namesRes.data.values || []).map(r => r[0]).filter(Boolean);
-    const beginnerCol = (begRes.data.values || []).map(r => r[0]);
-    const intermediateCol = (intRes.data.values || []).map(r => r[0]);
-    const advancedCol = (advRes.data.values || []).map(r => r[0]);
-
-    // D1/E1/F1 are labels, so shift if lengths exceed names
-    const maybeShift = (arr) => arr.length === names.length + 1 ? arr.slice(1) : arr;
-    const beginners = maybeShift(beginnerCol);
-    const intermediates = maybeShift(intermediateCol);
-    const advanceds = maybeShift(advancedCol);
-
-    const committees = names.map((name, idx) => {
-      const beginner = parseInt(beginners[idx]) || 0;
-      const intermediate = parseInt(intermediates[idx]) || 0;
-      const advanced = parseInt(advanceds[idx]) || 0;
-      return {
-        name,
-        beginner,
-        intermediate,
-        advanced,
-        total: beginner + intermediate + advanced,
-      };
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Dash Board'!A33:F63", // Committee data (include column F for total)
     });
+
+    const values = response.data.values || [];
+    const committees = values
+      .filter(row => row[1] && row[1] !== 'COM') // Skip header and empty rows
+      .map(row => ({
+        name: row[1] || '',
+        beginner: parseInt(row[2]) || 0,
+        intermediate: parseInt(row[3]) || 0,
+        advanced: parseInt(row[4]) || 0,
+        total: parseInt(row[5]) || 0
+      }));
 
     setInCache('committees', committees, 60_000);
     res.json({ success: true, data: committees });
@@ -485,6 +460,86 @@ app.get('/api/committees', async (req, res) => {
   } catch (error) {
     console.error('Error fetching committee data:', error);
     res.status(500).json({ error: 'Failed to fetch committee data' });
+  }
+});
+
+// First Choice Breakdown (COM POPULARITY)
+app.get('/api/first-choice', async (req, res) => {
+  try {
+    const cached = getFromCache('firstChoice');
+    if (cached) return res.json({ success: true, data: cached });
+
+    const [namesRes, begRes, intRes, advRes] = await Promise.all([
+      sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: "'COM POPULARITY'!A2:A31" }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: "'COM POPULARITY'!D2:D31" }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: "'COM POPULARITY'!E2:E31" }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: "'COM POPULARITY'!F2:F31" })
+    ]);
+
+    const names = (namesRes.data.values || []).map(r => r[0]).filter(Boolean);
+    const beginners = (begRes.data.values || []).map(r => parseInt(r[0]) || 0);
+    const intermediates = (intRes.data.values || []).map(r => parseInt(r[0]) || 0);
+    const advanceds = (advRes.data.values || []).map(r => parseInt(r[0]) || 0);
+
+    const data = names.map((name, idx) => ({
+      name,
+      Beginner: beginners[idx] || 0,
+      Intermediate: intermediates[idx] || 0,
+      Advanced: advanceds[idx] || 0,
+      Total: (beginners[idx] || 0) + (intermediates[idx] || 0) + (advanceds[idx] || 0)
+    }));
+
+    setInCache('firstChoice', data, 60_000);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error fetching first-choice data:', error);
+    res.status(500).json({ error: 'Failed to fetch first-choice data' });
+  }
+});
+
+// Delegate name typeahead: returns [{ name, code }]
+app.get('/api/delegates-search', async (req, res) => {
+  try {
+    const query = (req.query.query || '').toString().trim().toLowerCase();
+    if (!query) return res.json({ success: true, data: [] });
+
+    // Cache full roster for 60s to avoid repeated reads
+    let roster = getFromCache('delegateRoster');
+    if (!roster) {
+      const [namesRes, codesRes] = await Promise.all([
+        sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: "'Del Codes & Names'!E2:E2000", // Names
+        }),
+        sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: "'Del Codes & Names'!C2:C2000", // Codes
+        }),
+      ]);
+      const names = namesRes.data.values || [];
+      const codes = codesRes.data.values || [];
+      roster = names.map((row, i) => ({ name: row[0] || '', code: codes[i]?.[0] || '' }))
+                   .filter(r => r.name && r.code);
+      setInCache('delegateRoster', roster, 60_000);
+    }
+
+    // Simple fuzzy match: includes ignoring spaces and case
+    const norm = (s) => s.toLowerCase().replace(/\s+/g, '');
+    const qn = norm(query);
+    const results = roster
+      .map(r => ({
+        ...r,
+        score: r.name.toLowerCase().startsWith(query) ? 0 : (norm(r.name).includes(qn) ? 1 : 2)
+      }))
+      .filter(r => r.score < 2)
+      .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
+      .slice(0, 10)
+      .map(({ name, code }) => ({ name, code }));
+
+    res.json({ success: true, data: results });
+  } catch (error) {
+    console.error('Error in delegates-search:', error);
+    res.status(500).json({ error: 'Failed to search delegates' });
   }
 });
 
@@ -610,6 +665,34 @@ app.get('/api/year-comparison', async (req, res) => {
   } catch (error) {
     console.error('Error fetching year comparison data:', error);
     res.status(500).json({ error: 'Failed to fetch year comparison data' });
+  }
+});
+
+// Delegate experience breakdown (Beginner/Intermediate/Advanced)
+app.get('/api/delegate-breakdown', async (req, res) => {
+  try {
+    const cached = getFromCache('delegateBreakdown');
+    if (cached) return res.json({ success: true, data: cached });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Dash Board'!N63:P67",
+    });
+
+    const values = response.data.values || [];
+    // Expect headers in row 63; rows 64-66 are B/I/A; row 67 is total
+    const rows = values.slice(1, 4); // safely handle shorter
+    const data = rows.map(r => ({
+      label: r[0] || '',
+      number: parseInt(r[1]) || 0,
+      percentage: r[2] || '0%'
+    }));
+
+    setInCache('delegateBreakdown', data, 60_000);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error fetching delegate breakdown:', error);
+    res.status(500).json({ error: 'Failed to fetch delegate breakdown' });
   }
 });
 

@@ -142,6 +142,36 @@
   transition: all 0.2s;
 }
 
+.suggestions {
+  margin-top: 0.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.suggestion-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  color: white;
+}
+
+.suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.suggestion-item .s-code {
+  opacity: 0.8;
+}
+
+.small-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .input-group input:focus {
   outline: none;
   border-color: rgba(255, 255, 255, 0.4);

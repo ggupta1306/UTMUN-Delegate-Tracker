@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import DelegationSearch from './DelegationSearch'
 import './DelegateSearch.css'
@@ -9,6 +9,30 @@ function DelegateSearch() {
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
+  const [nameQuery, setNameQuery] = useState('')
+  const [suggestions, setSuggestions] = useState([])
+  const [isSearchingNames, setIsSearchingNames] = useState(false)
+
+  useEffect(() => {
+    const q = nameQuery.trim()
+    if (!q) {
+      setSuggestions([])
+      return
+    }
+    const handle = setTimeout(async () => {
+      try {
+        setIsSearchingNames(true)
+        const API_URL = import.meta.env.VITE_API_URL || ''
+        const res = await axios.get(`${API_URL}/api/delegates-search`, { params: { query: q } })
+        setSuggestions(res.data?.data || [])
+      } catch (e) {
+        setSuggestions([])
+      } finally {
+        setIsSearchingNames(false)
+      }
+    }, 250)
+    return () => clearTimeout(handle)
+  }, [nameQuery])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -73,6 +97,31 @@ function DelegateSearch() {
 
       <div className="search-container">
         <form onSubmit={handleSubmit} className="search-form">
+          <div className="input-group">
+            <label>Search by Name</label>
+            <input
+              type="text"
+              value={nameQuery}
+              onChange={(e) => setNameQuery(e.target.value)}
+              placeholder="Type a name..."
+              disabled={loading}
+            />
+            {isSearchingNames && <div className="small-hint">Searching...</div>}
+            {suggestions.length > 0 && (
+              <div className="suggestions">
+                {suggestions.map((s, idx) => (
+                  <div
+                    key={`${s.code}-${idx}`}
+                    className="suggestion-item"
+                    onClick={() => { setDelegateNumber(s.code); setNameQuery(s.name); setSuggestions([]); }}
+                  >
+                    <span className="s-name">{s.name}</span>
+                    <span className="s-code">#{s.code}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="input-group">
             <label>Enter Delegate Number</label>
             <input

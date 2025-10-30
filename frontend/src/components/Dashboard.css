@@ -383,6 +383,56 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Countdown */
+.countdown-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 20, 25, 0.2);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+.countdown-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.countdown-label {
+  color: rgba(255,255,255,0.85);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 0.2rem;
+}
+
+.countdown-date {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+}
+
+.countdown-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(74,144,226,0.25), rgba(74,144,226,0.45));
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+.countdown-value {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
 .progress-header {
   display: flex;
   justify-content: space-between;
@@ -530,19 +580,21 @@
 }
 
 .quick-stat-card {
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.25) 100%);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   text-align: center;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 .quick-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .quick-stat-label {
@@ -554,10 +606,11 @@
 }
 
 .quick-stat-value {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
   word-break: break-word;
+  letter-spacing: 0.2px;
 }
 
 .quick-stat-breakdown {

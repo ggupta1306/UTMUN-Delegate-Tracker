@@ -10,6 +10,8 @@ function Charts() {
   const [trends, setTrends] = useState([])
   const [sevenDayData, setSevenDayData] = useState([])
   const [yearComparison, setYearComparison] = useState([])
+  const [firstChoice, setFirstChoice] = useState([])
+  const [delegateBreakdown, setDelegateBreakdown] = useState([])
 
   useEffect(() => {
     fetchData()
@@ -21,19 +23,23 @@ function Charts() {
   const fetchData = async () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || ''
-      const [committeeRes, respRes, trendsRes, sevenDayRes, yearCompRes] = await Promise.all([
+      const [committeeRes, firstChoiceRes, respRes, trendsRes, sevenDayRes, yearCompRes, breakdownRes] = await Promise.all([
         axios.get(`${API_URL}/api/committees`),
+        axios.get(`${API_URL}/api/first-choice`).catch(() => ({ data: { data: [] } })),
         axios.get(`${API_URL}/api/responsibility`),
         axios.get(`${API_URL}/api/registration-trends`),
         axios.get(`${API_URL}/api/7day-signup`),
-        axios.get(`${API_URL}/api/year-comparison`).catch(() => ({ data: { data: [] } }))
+        axios.get(`${API_URL}/api/year-comparison`).catch(() => ({ data: { data: [] } })),
+        axios.get(`${API_URL}/api/delegate-breakdown`).catch(() => ({ data: { data: [] } }))
       ])
 
       setCommittees(committeeRes.data.data || [])
+      setFirstChoice(firstChoiceRes.data.data || [])
       setResponsibility(respRes.data.data || [])
       setTrends(trendsRes.data.data || [])
       setSevenDayData(sevenDayRes.data.data || [])
       setYearComparison(yearCompRes.data.data || [])
+      setDelegateBreakdown(breakdownRes.data.data || [])
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -60,14 +66,14 @@ function Charts() {
   }))
 
   // Prepare data for stacked bar chart showing committee breakdown
-  const chartData = committees
-    .filter(c => c.name && c.total)
+  const chartData = firstChoice
+    .filter(c => c.name && (c.Total || c.Beginner || c.Intermediate || c.Advanced))
     .map(c => ({
-      name: c.name, // Show full committee name
-      Beginner: Number(c.beginner) || 0,
-      Intermediate: Number(c.intermediate) || 0,
-      Advanced: Number(c.advanced) || 0,
-      Total: Number(c.total) || 0
+      name: c.name,
+      Beginner: Number(c.Beginner) || 0,
+      Intermediate: Number(c.Intermediate) || 0,
+      Advanced: Number(c.Advanced) || 0,
+      Total: Number(c.Total) || 0
     }))
 
   return (
@@ -76,6 +82,32 @@ function Charts() {
         <h2>UTMUN 2026 Analytics</h2>
         <button onClick={fetchData} className="refresh-btn">Refresh</button>
       </div>
+
+      {/* Delegate Experience Breakdown */}
+      {delegateBreakdown.length > 0 && (
+        <div className="chart-card">
+          <h3>Delegate Experience Breakdown</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart 
+              data={delegateBreakdown.map(r => ({ ...r, short: (r.label || '').split('(')[0].trim() }))}
+              layout="vertical" 
+              margin={{ left: 20, right: 20, top: 10, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis type="number" stroke="#888" />
+              <YAxis type="category" dataKey="short" stroke="#888" width={120} tick={{ fontSize: 12 }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0f1419', border: '1px solid #333', color: 'white' }} formatter={(v, n, p) => [v, 'Number']} />
+              <Legend wrapperStyle={{ color: 'white' }} />
+              <Bar dataKey="number" name="Number" fill="#4a90e2" maxBarSize={18} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div style={{ marginTop: '0.75rem', color: '#aaa', fontSize: '0.9rem' }}>
+            {delegateBreakdown.map((r, i) => (
+              <span key={i} style={{ marginRight: '1rem' }}>{(r.label || '').split('(')[0].trim()}: {r.percentage}</span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 7 Day Running Signup Chart */}
       {signupData.length > 0 && (
